@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 
 const STORAGE_KEY = 'sbudget_user'
 
 function App() {
   const [user, setUser] = useState(null)
+  const [authScreen, setAuthScreen] = useState('login')
 
   useEffect(() => {
     try {
@@ -19,6 +21,7 @@ function App() {
   const onLoggedIn = (u) => {
     setUser(u)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u))
+    setAuthScreen('login')
   }
 
   const onLogout = () => {
@@ -27,7 +30,20 @@ function App() {
   }
 
   if (!user) {
-    return <Login onLoggedIn={onLoggedIn} />
+    if (authScreen === 'signup') {
+      return (
+        <Signup
+          onRegistered={onLoggedIn}
+          onBackToLogin={() => setAuthScreen('login')}
+        />
+      )
+    }
+    return (
+      <Login
+        onLoggedIn={onLoggedIn}
+        onSignupClick={() => setAuthScreen('signup')}
+      />
+    )
   }
 
   return <Dashboard user={user} onLogout={onLogout} />

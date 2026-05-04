@@ -8,6 +8,7 @@ import {
   dashboardApi,
   transactionApi,
   categoryApi,
+  userApi,
 } from '../api/transactionApi'
 
 const Dashboard = ({ user, onLogout }) => {
@@ -19,6 +20,9 @@ const Dashboard = ({ user, onLogout }) => {
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   const loadData = useCallback(async (opts = {}) => {
     const showSpinner = opts.showSpinner === true
@@ -113,6 +117,29 @@ const Dashboard = ({ user, onLogout }) => {
     setEditingTransaction(null)
   }
 
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setError('Enter your password to delete this account.')
+      return
+    }
+    if (!window.confirm('Delete your account and all data? This cannot be undone.')) {
+      return
+    }
+    setDeleteBusy(true)
+    setError(null)
+    try {
+      await userApi.deleteAccount(uid, { password: deletePassword })
+      setDeletePassword('')
+      setShowDeleteAccount(false)
+      onLogout()
+    } catch (err) {
+      const d = err.response?.data?.detail
+      setError(typeof d === 'string' ? d : err.message || 'Could not delete account')
+    } finally {
+      setDeleteBusy(false)
+    }
+  }
+
   return (
     <main className="page-bg">
       <header className="panel border-b border-wine-850/50 shadow-md">
@@ -128,20 +155,57 @@ const Dashboard = ({ user, onLogout }) => {
                 {user.email}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingTransaction(null)
-                  setShowForm(!showForm)
-                }}
-                className="btn-primary px-5 py-2.5"
-              >
-                {showForm ? 'Close form' : '+ Add transaction'}
-              </button>
-              <button type="button" onClick={onLogout} className="btn-muted px-4 py-2.5">
-                Log out
-              </button>
+            <div className="flex flex-col gap-3 w-full sm:w-auto sm:items-end">
+              <div className="flex flex-wrap gap-2 justify-end items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTransaction(null)
+                    setShowForm(!showForm)
+                  }}
+                  className="btn-primary px-5 py-2.5"
+                >
+                  {showForm ? 'Close form' : '+ Add transaction'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteAccount((v) => !v)
+                    setDeletePassword('')
+                    setError(null)
+                  }}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium text-red-200 bg-red-950/35 border border-red-900/50 hover:bg-red-950/55"
+                >
+                  {showDeleteAccount ? 'Cancel delete' : 'Delete account'}
+                </button>
+                <button type="button" onClick={onLogout} className="btn-muted px-4 py-2.5">
+                  Log out
+                </button>
+              </div>
+              {showDeleteAccount && (
+                <div className="w-full max-w-md p-4 rounded-lg bg-wine-950/50 border border-red-900/40 sm:ml-auto">
+                  <p className="text-sm text-stone-300 mb-2">
+                    Enter your password to permanently delete this user and all categories,
+                    budgets, and transactions.
+                  </p>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Password"
+                    className="input-field w-full max-w-xs mb-2 text-sm"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    disabled={deleteBusy}
+                    onClick={handleDeleteAccount}
+                    className="text-sm font-medium px-4 py-2 rounded-lg bg-red-900/80 text-red-50 hover:bg-red-800 disabled:opacity-50"
+                  >
+                    {deleteBusy ? 'Deleting…' : 'Confirm delete account'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

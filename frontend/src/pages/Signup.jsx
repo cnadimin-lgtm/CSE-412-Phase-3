@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { authApi } from '../api/transactionApi'
+import { userApi } from '../api/transactionApi'
 
-const Login = ({ onLoggedIn, onSignupClick }) => {
+const Signup = ({ onRegistered, onBackToLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
+    email: '',
   })
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -20,16 +21,22 @@ const Login = ({ onLoggedIn, onSignupClick }) => {
     setError(null)
     setLoading(true)
     try {
-      const { data } = await authApi.login({
+      if (!formData.username.trim() || !formData.password || !formData.email.trim()) {
+        setError('Please fill in username, password, and email.')
+        setLoading(false)
+        return
+      }
+      const { data } = await userApi.register({
         username: formData.username.trim(),
         password: formData.password,
+        email: formData.email.trim(),
       })
-      onLoggedIn(data)
+      onRegistered(data)
     } catch (err) {
       const msg =
         err.response?.data?.detail ||
         err.message ||
-        'Login failed'
+        'Sign up failed'
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
     } finally {
       setLoading(false)
@@ -39,9 +46,9 @@ const Login = ({ onLoggedIn, onSignupClick }) => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 page-bg">
       <div className="w-full max-w-md panel p-8 rounded-xl shadow-lg border border-wine-700/40">
-        <h1 className="text-2xl font-bold text-stone-100 mb-1">Student Budgeting</h1>
+        <h1 className="text-2xl font-bold text-stone-100 mb-1">Create account</h1>
         <p className="text-stone-300 text-sm mb-6">
-          Sign in to manage categories, low-balance floors, and transactions.
+          Register with username, password, and email. You will be signed in after sign up.
         </p>
 
         {error && (
@@ -52,11 +59,11 @@ const Login = ({ onLoggedIn, onSignupClick }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-stone-200 mb-1" htmlFor="li-user">
+            <label className="block text-sm font-medium text-stone-200 mb-1" htmlFor="su-user">
               Username
             </label>
             <input
-              id="li-user"
+              id="su-user"
               name="username"
               type="text"
               value={formData.username}
@@ -67,17 +74,32 @@ const Login = ({ onLoggedIn, onSignupClick }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-200 mb-1" htmlFor="li-pass">
+            <label className="block text-sm font-medium text-stone-200 mb-1" htmlFor="su-email">
+              Email
+            </label>
+            <input
+              id="su-email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder:text-stone-300 focus:ring-2 focus:ring-rose-600/60 outline-none"
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-stone-200 mb-1" htmlFor="su-pass">
               Password
             </label>
             <input
-              id="li-pass"
+              id="su-pass"
               name="password"
               type="password"
               value={formData.password}
               onChange={handleChange}
               className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder:text-stone-300 focus:ring-2 focus:ring-rose-600/60 outline-none"
-              autoComplete="current-password"
+              autoComplete="new-password"
               required
             />
           </div>
@@ -86,29 +108,23 @@ const Login = ({ onLoggedIn, onSignupClick }) => {
             disabled={loading}
             className="w-full py-2.5 rounded-lg font-semibold text-white bg-rose-800 hover:bg-rose-700 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Creating account…' : 'Sign up'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-stone-300">
-          Need an account?{' '}
+        <p className="mt-6 text-center text-sm text-stone-300">
+          Already have an account?{' '}
           <button
             type="button"
-            onClick={onSignupClick}
+            onClick={onBackToLogin}
             className="text-rose-300 hover:text-rose-200 font-medium"
           >
-            Sign up
+            Sign in
           </button>
-        </p>
-        <p className="mt-6 text-xs text-stone-400 text-center leading-relaxed">
-          Demo login: <span className="text-stone-300">aryan</span> /{' '}
-          <span className="text-stone-300">pass123</span>
-          <br />
-          Other seed users and passwords: README.md
         </p>
       </div>
     </div>
   )
 }
 
-export default Login
+export default Signup

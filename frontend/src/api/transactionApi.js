@@ -25,6 +25,12 @@ export const authApi = {
   login: (payload) => api.post('/auth/login', payload),
 }
 
+export const userApi = {
+  register: (payload) => api.post('/users', payload),
+  deleteAccount: (uid, payload) =>
+    api.delete(`/users/${uid}`, { data: payload }),
+}
+
 export const dashboardApi = {
   /** Unique URL each call so dashboard rows (floor, buffer, islow, balances) stay fresh. */
   getDashboard: (uid) =>

@@ -13,7 +13,7 @@ All SQL is parameterized; values are never concatenated into query strings.
 
 from typing import Generator, List
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -31,12 +31,14 @@ from schemas import (
     TransactionCreate,
     TransactionDetailRow,
     TransactionUpdate,
+    UserCreate,
+    UserDeleteBody,
     dec_to_float,
 )
 
 app = FastAPI(title="Student Budgeting API", version="1.0.0")
 
-# Local dev: allow any port on localhost / 127.0.0.1 (Vite may use 5174, 5175, … if 5173 is taken).
+# Local dev: allow any port on localhost / 127.0.0.1 (Vite may use 5174, 5175 or other ones if 5173 is taken)
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
@@ -67,9 +69,14 @@ def row_transaction_detail(row) -> TransactionDetailRow:
     )
 
 
+class DeleteOk(BaseModel):
+    ok: bool
+    message: str
+
+
 @app.post("/auth/login", response_model=LoginResponse)
 def login(body: LoginRequest, conn=Depends(get_db)):
-    # Production apps should hash passwords (e.g. bcrypt) and compare hashes — not plain text.
+    # ideally should be secure but this is just a demo
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -83,6 +90,56 @@ def login(body: LoginRequest, conn=Depends(get_db)):
     if not row:
         raise HTTPException(status_code=401, detail="Invalid username or password")
     return LoginResponse(uid=row[0], username=row[1], email=row[2])
+
+
+@app.post("/users", response_model=LoginResponse, status_code=201)
+def register_user(body: UserCreate, conn=Depends(get_db)):
+    username = body.username.strip()
+    email = body.email.strip()
+    if not username or not email:
+        raise HTTPException(status_code=400, detail="Username and email are required")
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM users WHERE username = %s OR email = %s",
+            (username, email),
+        )
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400, detail="Username or email already registered",
+            )
+        cur.execute(
+            """
+            INSERT INTO users (username, password, email)
+            VALUES (%s, %s, %s)
+            RETURNING uid, username, email
+            """,
+            (username, body.password, email),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    return LoginResponse(uid=row[0], username=row[1], email=row[2])
+
+
+@app.delete("/users/{uid}", response_model=DeleteOk)
+def delete_user(
+    uid: int,
+    body: UserDeleteBody = Body(...),
+    conn=Depends(get_db),
+):
+    if not dbmod.user_exists(conn, uid):
+        raise HTTPException(status_code=404, detail="User not found")
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT password FROM users WHERE uid = %s",
+            (uid,),
+        )
+        row = cur.fetchone()
+    if not row or row[0] != body.password:
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM users WHERE uid = %s", (uid,))
+    conn.commit()
+    return DeleteOk(ok=True, message="Account deleted")
 
 
 @app.get("/users/{uid}/dashboard", response_model=List[DashboardRow])
@@ -234,11 +291,6 @@ def update_category(categoryid: int, body: CategoryUpdate, conn=Depends(get_db))
         row = cur.fetchone()
     conn.commit()
     return CategoryRow(categoryid=row[0], uid=row[1], categoryname=row[2])
-
-
-class DeleteOk(BaseModel):
-    ok: bool
-    message: str
 
 
 @app.delete("/categories/{categoryid}", response_model=DeleteOk)

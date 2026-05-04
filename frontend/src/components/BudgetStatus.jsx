@@ -15,10 +15,12 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState(null)
 
-  const spendPct = (spent, allocated) => {
+  /** Share of category income still in the bucket (balance / allocated). Moves when you add income or spend. */
+  const balanceRetentionPct = (balance, allocated) => {
     const a = Number(allocated)
-    if (!a || a <= 0) return 0
-    return Math.min((Number(spent) / a) * 100, 100)
+    const b = Number(balance)
+    if (!a || a <= 0 || Number.isNaN(a) || Number.isNaN(b)) return 0
+    return Math.min(100, Math.max(0, (b / a) * 100))
   }
 
   const startEdit = (row) => {
@@ -82,16 +84,17 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
           const spent = Number(row.spent)
           const allocated = Number(row.allocated)
           const floor = Number(row.limitamount)
-          const pct = spendPct(spent, allocated)
+          const bal = Number(row.current_balance)
+          const pct = balanceRetentionPct(bal, allocated)
           const low =
             typeof row.islow_computed === 'boolean'
               ? row.islow_computed
               : computeIsLow(row.current_balance, row.limitamount)
           const barColor = low
             ? 'bg-rose-600'
-            : pct > 90
+            : pct < 15
               ? 'bg-amber-600'
-              : pct > 70
+              : pct < 35
                 ? 'bg-amber-700/80'
                 : 'bg-emerald-700/90'
 
@@ -123,6 +126,10 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
                   </span>
                 </div>
                 <div className="flex justify-between">
+                  <span>Income in category</span>
+                  <span>${allocated.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
                   <span>Spent</span>
                   <span>${spent.toFixed(2)}</span>
                 </div>
@@ -136,12 +143,18 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
                 </div>
               </div>
 
-              <div className="w-full bg-wine-950/80 rounded-full h-2 overflow-hidden mb-3">
+              <div
+                className="w-full bg-wine-950/80 rounded-full h-2 overflow-hidden mb-1"
+                title="Share of category income still in balance"
+              >
                 <div
                   className={`h-full ${barColor} transition-all`}
                   style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
+              <p className="text-[10px] text-stone-500 mb-3">
+                Bar = balance ÷ income in category (updates on income and expenses)
+              </p>
 
               {editingId === row.budgetid ? (
                 <div className="flex flex-col gap-2">

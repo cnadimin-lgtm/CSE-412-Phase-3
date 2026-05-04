@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 # Matches DECIMAL(10,2) in schema.sql — max magnitude before PostgreSQL overflow.
+
 _MAX_MONEY = 99_999_999.99
 
 
@@ -23,6 +24,16 @@ class LoginResponse(BaseModel):
     uid: int
     username: str
     email: str
+
+
+class UserCreate(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+    password: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=100)
+
+
+class UserDeleteBody(BaseModel):
+    password: str = Field(min_length=1, max_length=100)
 
 
 class DashboardRow(BaseModel):
