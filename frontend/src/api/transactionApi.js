@@ -10,12 +10,27 @@ const api = axios.create({
   },
 })
 
+// Avoid stale GET responses after mutations (fresh dashboard / balances / islow).
+api.interceptors.request.use((config) => {
+  if ((config.method || 'get').toLowerCase() === 'get') {
+    config.headers = Object.assign({}, config.headers, {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    })
+  }
+  return config
+})
+
 export const authApi = {
   login: (payload) => api.post('/auth/login', payload),
 }
 
 export const dashboardApi = {
-  getDashboard: (uid) => api.get(`/users/${uid}/dashboard`),
+  /** Unique URL each call so dashboard rows (floor, buffer, islow, balances) stay fresh. */
+  getDashboard: (uid) =>
+    api.get(`/users/${uid}/dashboard`, {
+      params: { _: Date.now() },
+    }),
 }
 
 export const categoryApi = {

@@ -158,8 +158,7 @@ const AddTransactionForm = ({
 
         <p className="text-xs text-stone-300 leading-relaxed">
           New categories start at $0 balance: record an Income before an Expense. Use
-          &quot;Set budget&quot; on the Categories list so the category appears in Budget
-          buckets.
+          &quot;Set floor&quot; on Categories so the row appears in Budget buckets.
         </p>
 
         <div className="flex gap-3 pt-2">

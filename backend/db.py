@@ -1,7 +1,7 @@
 """
 PostgreSQL helpers for the Student Budgeting API.
 
-SOURCE OF TRUTH — columns and types mirror these files only:
+SOURCE OF TRUTH (do not invent columns/types here — mirror these files):
   - backend/schema.sql          … tables `users`, `categories`, `budget`, `transactions`;
                                 views `transaction_details`, `category_bucket_summary`
   - backend/data_generation.py … seed users/passwords and demo data (run after schema)
@@ -39,7 +39,7 @@ def get_connection():
         port=os.getenv("DB_PORT", "5432"),
     )
 
-# f
+# function for enforcing the rule that a category must belong to a user
 def category_belongs_to_user(conn, uid: int, categoryid: int) -> bool:
     with conn.cursor() as cur:
         cur.execute(
@@ -48,7 +48,7 @@ def category_belongs_to_user(conn, uid: int, categoryid: int) -> bool:
         )
         return cur.fetchone() is not None
 
-
+# function for enforcing the rule that a transaction must belong to a user
 def transaction_belongs_to_user(conn, txnid: int, uid: int) -> bool:
     with conn.cursor() as cur:
         cur.execute(
@@ -57,7 +57,7 @@ def transaction_belongs_to_user(conn, txnid: int, uid: int) -> bool:
         )
         return cur.fetchone() is not None
 
-
+# function for enforcing the rule that a budget must belong to a user
 def budget_belongs_to_user(conn, budgetid: int, uid: int) -> bool:
     with conn.cursor() as cur:
         cur.execute(
@@ -66,13 +66,13 @@ def budget_belongs_to_user(conn, budgetid: int, uid: int) -> bool:
         )
         return cur.fetchone() is not None
 
-
+# function for enforcing the rule that a user must exist
 def user_exists(conn, uid: int) -> bool:
     with conn.cursor() as cur:
         cur.execute("SELECT 1 FROM users WHERE uid = %s", (uid,))
         return cur.fetchone() is not None
 
-
+# function for getting the balance of a category
 def get_category_balance(conn, uid: int, categoryid: int) -> float:
     with conn.cursor() as cur:
         cur.execute(
@@ -88,7 +88,7 @@ def get_category_balance(conn, uid: int, categoryid: int) -> float:
         row = cur.fetchone()
         return float(row[0]) if row and row[0] is not None else 0.0
 
-
+# function for getting the balance of a category excluding a transaction
 def get_category_balance_excluding_txn(
     conn, uid: int, categoryid: int, txnid: int
 ) -> float:
@@ -106,9 +106,9 @@ def get_category_balance_excluding_txn(
         row = cur.fetchone()
         return float(row[0]) if row and row[0] is not None else 0.0
 
-
+# function for refreshing the islow flag of a budget
 def refresh_islow(conn, uid: int, categoryid: int) -> None:
-    current_balance = get_category_balance(conn, uid, categoryid)
+    bal = get_category_balance(conn, uid, categoryid)
     with conn.cursor() as cur:
         cur.execute(
             "SELECT limitamount FROM budget WHERE uid = %s AND categoryid = %s",
@@ -118,7 +118,7 @@ def refresh_islow(conn, uid: int, categoryid: int) -> None:
         if not row:
             return
         limitamount = float(row[0])
-        islow = current_balance <= 0.2 * limitamount
+        islow = bal <= limitamount
         cur.execute(
             """
             UPDATE budget

@@ -120,38 +120,36 @@ def seed_data(conn) -> None:
     (4, 'Utilities'),
     (4, 'Entertainment');
 
-    -- Budget rows define the planned allocation/limit for each category bucket.
-    -- islow means the current balance is low, using the rule:
-    -- current_balance <= 20% of limitamount.
+    -- Budget: limitamount = balance floor; islow when current_balance <= limitamount.
     INSERT INTO budget (uid, categoryid, limitamount, islow)
     VALUES
-    -- Aryan
-    (1, 1, 300.00, FALSE),
-    (1, 2, 950.00, TRUE),
-    (1, 3, 150.00, FALSE),
-    (1, 4, 220.00, TRUE),
-    (1, 5, 180.00, FALSE),
+    -- Aryan (balance / threshold / islow)
+    (1, 1, 100.00, FALSE),
+    (1, 2, 0.00, TRUE),
+    (1, 3, 60.00, FALSE),
+    (1, 4, 40.00, TRUE),
+    (1, 5, 80.00, FALSE),
 
     -- Gaurang
-    (2, 6, 275.00, FALSE),
-    (2, 7, 900.00, TRUE),
-    (2, 8, 140.00, FALSE),
-    (2, 9, 200.00, TRUE),
-    (2, 10, 120.00, FALSE),
+    (2, 6, 100.00, FALSE),
+    (2, 7, 55.00, TRUE),
+    (2, 8, 70.00, FALSE),
+    (2, 9, 35.00, TRUE),
+    (2, 10, 60.00, FALSE),
 
     -- Magdalene
-    (3, 11, 325.00, TRUE),
-    (3, 12, 1000.00, FALSE),
-    (3, 13, 160.00, FALSE),
-    (3, 14, 210.00, TRUE),
-    (3, 15, 130.00, FALSE),
+    (3, 11, 65.00, TRUE),
+    (3, 12, 250.00, FALSE),
+    (3, 13, 75.00, FALSE),
+    (3, 14, 40.00, TRUE),
+    (3, 15, 60.00, FALSE),
 
     -- Charan
-    (4, 16, 290.00, FALSE),
-    (4, 17, 875.00, TRUE),
-    (4, 18, 145.00, FALSE),
-    (4, 19, 225.00, FALSE),
-    (4, 20, 175.00, TRUE);
+    (4, 16, 120.00, FALSE),
+    (4, 17, 0.00, TRUE),
+    (4, 18, 65.00, FALSE),
+    (4, 19, 90.00, FALSE),
+    (4, 20, 25.00, TRUE);
 
     -- Transactions model money movement inside category buckets.
     -- INCOME adds money to the category bucket.

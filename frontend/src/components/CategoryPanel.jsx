@@ -70,7 +70,7 @@ const CategoryPanel = ({ uid, categories, budgetCategoryIds, onChanged }) => {
     const raw = (budgetLimitByCategory[categoryid] || '').trim()
     const val = parseFloat(raw)
     if (Number.isNaN(val) || val < 0) {
-      setError('Enter a valid budget limit (0 or more).')
+      setError('Enter a valid low-balance floor (0 or more).')
       return
     }
     setBusy(true)
@@ -85,7 +85,7 @@ const CategoryPanel = ({ uid, categories, budgetCategoryIds, onChanged }) => {
       await refresh()
     } catch (err) {
       const d = err.response?.data?.detail
-      setError(typeof d === 'string' ? d : err.message || 'Could not create budget')
+      setError(typeof d === 'string' ? d : err.message || 'Could not set low-balance floor')
     } finally {
       setBusy(false)
     }
@@ -110,7 +110,8 @@ const CategoryPanel = ({ uid, categories, budgetCategoryIds, onChanged }) => {
     <div className="card-panel p-6 mb-6">
       <h2 className="text-xl font-bold text-stone-100 mb-3">Categories</h2>
       <p className="text-sm text-stone-300 mb-4">
-        Categories are per-user spending buckets. Add a budget separately for limits.
+        Categories are per-user spending buckets. Set a low-balance floor for each category you want
+        on the dashboard.
       </p>
       {error && (
         <div className="mb-3 p-3 rounded-lg bg-red-950/40 border border-red-900/50 text-red-200 text-sm">
@@ -159,7 +160,7 @@ const CategoryPanel = ({ uid, categories, budgetCategoryIds, onChanged }) => {
                         min="0"
                         max="99999999.99"
                         step="0.01"
-                        placeholder="Budget limit"
+                        placeholder="Low balance floor"
                         value={budgetLimitByCategory[c.categoryid] ?? ''}
                         onChange={(e) =>
                           setBudgetLimitField(c.categoryid, e.target.value)
@@ -173,7 +174,7 @@ const CategoryPanel = ({ uid, categories, budgetCategoryIds, onChanged }) => {
                         onClick={() => handleCreateBudget(c.categoryid)}
                         className="text-xs font-medium text-rose-300 hover:text-rose-200"
                       >
-                        Set budget
+                        Set floor
                       </button>
                     </div>
                   )}

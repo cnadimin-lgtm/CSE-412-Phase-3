@@ -29,11 +29,11 @@ class DashboardRow(BaseModel):
     budgetid: int
     categoryid: int
     categoryname: str
-    limitamount: float
+    limitamount: float  # low-balance floor; alert when current_balance <= this
     allocated: float
     spent: float
     current_balance: float
-    remaining_budget: float
+    remaining_budget: float  # current_balance - limitamount (buffer above alert line)
     islow_stored: bool
     islow_computed: bool
 
@@ -77,12 +77,18 @@ class BudgetRow(BaseModel):
 class BudgetCreate(BaseModel):
     uid: int
     categoryid: int
-    limitamount: float = Field(ge=0, le=_MAX_MONEY)
+    limitamount: float = Field(
+        ge=0, le=_MAX_MONEY,
+        description="Balance floor: islow when current_balance <= limitamount",
+    )
 
 
 class BudgetUpdate(BaseModel):
     uid: int
-    limitamount: float = Field(ge=0, le=_MAX_MONEY)
+    limitamount: float = Field(
+        ge=0, le=_MAX_MONEY,
+        description="Balance floor: islow when current_balance <= limitamount",
+    )
 
 
 class TransactionCreate(BaseModel):

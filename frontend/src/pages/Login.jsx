@@ -32,7 +32,7 @@ const Login = ({ onLoggedIn }) => {
           Student Budgeting
         </h1>
         <p className="text-stone-300 text-sm mb-6">
-          Sign in to manage categories, budgets, and transactions.
+          Sign in to manage categories, low-balance floors, and transactions.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (

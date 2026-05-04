@@ -20,9 +20,10 @@ const Dashboard = ({ user, onLogout }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (opts = {}) => {
+    const showSpinner = opts.showSpinner === true
     setError(null)
-    setIsLoading(true)
+    if (showSpinner) setIsLoading(true)
     const detailFrom = (reason) => {
       const d = reason?.response?.data?.detail
       if (typeof d === 'string') return d
@@ -35,20 +36,26 @@ const Dashboard = ({ user, onLogout }) => {
         categoryApi.getCategories(uid),
       ])
       const failed = []
-      if (dashR.status === 'fulfilled') setDashboardBuckets(dashR.value.data)
-      else failed.push(`Dashboard: ${detailFrom(dashR.reason)}`)
-      if (txnR.status === 'fulfilled') setTransactions(txnR.value.data)
-      else failed.push(`Transactions: ${detailFrom(txnR.reason)}`)
-      if (catR.status === 'fulfilled') setCategories(catR.value.data)
-      else failed.push(`Categories: ${detailFrom(catR.reason)}`)
+      if (dashR.status === 'fulfilled') {
+        const rows = dashR.value.data
+        setDashboardBuckets(Array.isArray(rows) ? [...rows] : [])
+      } else failed.push(`Dashboard: ${detailFrom(dashR.reason)}`)
+      if (txnR.status === 'fulfilled') {
+        const rows = txnR.value.data
+        setTransactions(Array.isArray(rows) ? [...rows] : [])
+      } else failed.push(`Transactions: ${detailFrom(txnR.reason)}`)
+      if (catR.status === 'fulfilled') {
+        const rows = catR.value.data
+        setCategories(Array.isArray(rows) ? [...rows] : [])
+      } else failed.push(`Categories: ${detailFrom(catR.reason)}`)
       if (failed.length) setError(failed.join(' · '))
     } finally {
-      setIsLoading(false)
+      if (showSpinner) setIsLoading(false)
     }
   }, [uid])
 
   useEffect(() => {
-    loadData()
+    loadData({ showSpinner: true })
   }, [loadData])
 
   const budgetCategoryIds = useMemo(
@@ -113,7 +120,7 @@ const Dashboard = ({ user, onLogout }) => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-stone-100">
-                Student budgeting
+                Student Budgeting
               </h1>
               <p className="text-stone-300 mt-1">
                 Signed in as <span className="text-stone-200">{user.username}</span>

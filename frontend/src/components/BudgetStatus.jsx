@@ -1,15 +1,24 @@
 import React, { useState } from 'react'
 import { budgetApi } from '../api/transactionApi'
 
+/** Same as category_bucket_summary.islow_computed: current_balance <= limitamount (floor). */
+function computeIsLow(currentBalance, floor) {
+  const b = Number(currentBalance)
+  const f = Number(floor)
+  if (Number.isNaN(b) || Number.isNaN(f)) return false
+  return b <= f + 1e-9
+}
+
 const BudgetStatus = ({ uid, buckets, onRefresh }) => {
   const [editingId, setEditingId] = useState(null)
   const [draftLimit, setDraftLimit] = useState('')
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState(null)
 
-  const getPercentage = (spent, limit) => {
-    if (!limit || limit === 0) return 0
-    return Math.min((spent / limit) * 100, 100)
+  const spendPct = (spent, allocated) => {
+    const a = Number(allocated)
+    if (!a || a <= 0) return 0
+    return Math.min((Number(spent) / a) * 100, 100)
   }
 
   const startEdit = (row) => {
@@ -27,7 +36,7 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
   const saveLimit = async (budgetid) => {
     const val = parseFloat(draftLimit)
     if (Number.isNaN(val) || val < 0) {
-      setLocalError('Enter a valid limit (≥ 0).')
+      setLocalError('Enter a valid floor (≥ 0).')
       return
     }
     setSaving(true)
@@ -49,7 +58,7 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
       <div className="card-panel p-6">
         <h2 className="text-xl font-bold text-stone-100 mb-2">Budget buckets</h2>
         <p className="text-stone-300 text-center py-6">
-          No budget rows yet. Create a category and add a budget.
+          No budget rows yet. Set a low-balance floor on a category first.
         </p>
       </div>
     )
@@ -57,7 +66,12 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
 
   return (
     <div className="card-panel p-6">
-      <h2 className="text-xl font-bold text-stone-100 mb-4">Budget buckets</h2>
+      <h2 className="text-xl font-bold text-stone-100 mb-1">Budget buckets</h2>
+      <p className="text-xs text-stone-300 mb-4 leading-relaxed">
+        The floor is the lowest balance allowed before the card is marked low. If current balance is
+        at or below the floor, you get a low warning. Raising the floor makes the warning easier to
+        trigger; lowering it (or setting $0) only flags when the balance is at the bottom.
+      </p>
       {localError && (
         <div className="mb-4 p-3 rounded-lg bg-red-950/40 border border-red-900/50 text-red-200 text-sm">
           {localError}
@@ -66,9 +80,13 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {buckets.map((row) => {
           const spent = Number(row.spent)
-          const limit = Number(row.limitamount)
-          const pct = getPercentage(spent, limit)
-          const low = row.islow_computed
+          const allocated = Number(row.allocated)
+          const floor = Number(row.limitamount)
+          const pct = spendPct(spent, allocated)
+          const low =
+            typeof row.islow_computed === 'boolean'
+              ? row.islow_computed
+              : computeIsLow(row.current_balance, row.limitamount)
           const barColor = low
             ? 'bg-rose-600'
             : pct > 90
@@ -109,8 +127,12 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
                   <span>${spent.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Remaining (vs limit)</span>
+                  <span>Buffer (balance − floor)</span>
                   <span>${Number(row.remaining_budget).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs pt-1 border-t border-wine-850/40">
+                  <span>Low if balance ≤</span>
+                  <span className="text-stone-200">${floor.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -123,7 +145,7 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
 
               {editingId === row.budgetid ? (
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs text-stone-300">Budget limit ($)</label>
+                  <label className="text-xs text-stone-300">Low balance floor ($)</label>
                   <input
                     type="number"
                     min="0"
@@ -154,14 +176,14 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
               ) : (
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs text-stone-300">
-                    Limit: <span className="text-stone-100">${limit.toFixed(2)}</span>
+                    Floor: <span className="text-stone-100">${floor.toFixed(2)}</span>
                   </p>
                   <button
                     type="button"
                     onClick={() => startEdit(row)}
                     className="text-xs font-medium text-rose-300 hover:text-rose-200"
                   >
-                    Edit limit
+                    Edit floor
                   </button>
                 </div>
               )}

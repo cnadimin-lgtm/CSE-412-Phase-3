@@ -27,6 +27,7 @@ CREATE TABLE categories (
     UNIQUE (uid, categoryname)
 );
 
+-- limitamount = low-balance floor: islow is TRUE when current_balance <= limitamount
 CREATE TABLE budget (
     budgetid SERIAL PRIMARY KEY,
     uid INT NOT NULL REFERENCES users(uid) ON DELETE CASCADE,
@@ -73,11 +74,9 @@ JOIN categories c
    AND t.categoryid = c.categoryid;
 
 -- View: category_bucket_summary
--- Summarizes each user's category bucket by showing the budget limit,
--- total allocated income, total expenses, current balance, remaining budget,
--- stored low-balance status, and computed low-balance status.
--- In this design, islow means the category bucket's current balance is low:
--- TRUE when current_balance <= 20% of limitamount.
+-- limitamount = balance floor for alerts (see budget table).
+-- remaining_budget = current_balance - limitamount (buffer above the alert line; negative = below it).
+-- islow_computed: current_balance <= limitamount.
 CREATE VIEW category_bucket_summary AS
 SELECT
     b.budgetid,
@@ -94,9 +93,12 @@ SELECT
         COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0)
     )::DECIMAL(10,2) AS current_balance,
     (
-        b.limitamount
-        -
-        COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0)
+        (
+            COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0)
+            -
+            COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0)
+        )
+        - b.limitamount
     )::DECIMAL(10,2) AS remaining_budget,
     b.islow AS islow_stored,
     CASE
@@ -104,7 +106,7 @@ SELECT
             COALESCE(SUM(CASE WHEN t.type = 'INCOME' THEN t.amount ELSE 0 END), 0)
             -
             COALESCE(SUM(CASE WHEN t.type = 'EXPENSE' THEN t.amount ELSE 0 END), 0)
-        ) <= 0.2 * b.limitamount
+        ) <= b.limitamount
         THEN TRUE
         ELSE FALSE
     END AS islow_computed
