@@ -23,22 +23,25 @@ const Dashboard = ({ user, onLogout }) => {
   const loadData = useCallback(async () => {
     setError(null)
     setIsLoading(true)
+    const detailFrom = (reason) => {
+      const d = reason?.response?.data?.detail
+      if (typeof d === 'string') return d
+      return reason?.message || String(reason)
+    }
     try {
-      const [dashRes, txnRes, catRes] = await Promise.all([
+      const [dashR, txnR, catR] = await Promise.allSettled([
         dashboardApi.getDashboard(uid),
         transactionApi.getTransactions(uid),
         categoryApi.getCategories(uid),
       ])
-      setDashboardBuckets(dashRes.data)
-      setTransactions(txnRes.data)
-      setCategories(catRes.data)
-    } catch (err) {
-      const d = err.response?.data?.detail
-      setError(
-        typeof d === 'string'
-          ? d
-          : err.message || 'Failed to load data from the server.',
-      )
+      const failed = []
+      if (dashR.status === 'fulfilled') setDashboardBuckets(dashR.value.data)
+      else failed.push(`Dashboard: ${detailFrom(dashR.reason)}`)
+      if (txnR.status === 'fulfilled') setTransactions(txnR.value.data)
+      else failed.push(`Transactions: ${detailFrom(txnR.reason)}`)
+      if (catR.status === 'fulfilled') setCategories(catR.value.data)
+      else failed.push(`Categories: ${detailFrom(catR.reason)}`)
+      if (failed.length) setError(failed.join(' · '))
     } finally {
       setIsLoading(false)
     }
@@ -47,6 +50,11 @@ const Dashboard = ({ user, onLogout }) => {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const budgetCategoryIds = useMemo(
+    () => new Set((dashboardBuckets || []).map((b) => b.categoryid)),
+    [dashboardBuckets],
+  )
 
   const { income, expenses } = useMemo(() => {
     let inc = 0
@@ -107,7 +115,7 @@ const Dashboard = ({ user, onLogout }) => {
               <h1 className="text-3xl font-bold text-stone-100">
                 Student budgeting
               </h1>
-              <p className="text-stone-400 mt-1">
+              <p className="text-stone-300 mt-1">
                 Signed in as <span className="text-stone-200">{user.username}</span>
                 {' · '}
                 {user.email}
@@ -159,7 +167,12 @@ const Dashboard = ({ user, onLogout }) => {
           />
         </div>
 
-        <CategoryPanel uid={uid} categories={categories} onChanged={loadData} />
+        <CategoryPanel
+          uid={uid}
+          categories={categories}
+          budgetCategoryIds={budgetCategoryIds}
+          onChanged={loadData}
+        />
 
         <div className="mt-6">
           <TransactionTable

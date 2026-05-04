@@ -33,10 +33,16 @@ const AddTransactionForm = ({
       return
     }
     if (categories?.length) {
-      setFormData((prev) => ({
-        ...prev,
-        categoryid: prev.categoryid || categories[0].categoryid,
-      }))
+      setFormData((prev) => {
+        const first = categories[0].categoryid
+        const ids = categories.map((c) => Number(c.categoryid))
+        const prevId = prev.categoryid === '' ? null : Number(prev.categoryid)
+        const stillValid = prevId != null && ids.includes(prevId)
+        return {
+          ...prev,
+          categoryid: stillValid ? prev.categoryid : first,
+        }
+      })
     }
   }, [editingTransaction, categories])
 
@@ -76,7 +82,7 @@ const AddTransactionForm = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Amount
             </label>
             <input
@@ -87,13 +93,14 @@ const AddTransactionForm = ({
               placeholder="0.00"
               step="0.01"
               min="0"
+              max="99999999.99"
               className="input-field"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Type
             </label>
             <select
@@ -111,19 +118,23 @@ const AddTransactionForm = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Category
             </label>
             <select
               name="categoryid"
-              value={formData.categoryid}
+              value={
+                formData.categoryid === ''
+                  ? ''
+                  : String(formData.categoryid)
+              }
               onChange={handleChange}
               className="input-field"
               required
             >
               <option value="">Select a category</option>
               {(categories || []).map((cat) => (
-                <option key={cat.categoryid} value={cat.categoryid}>
+                <option key={cat.categoryid} value={String(cat.categoryid)}>
                   {cat.categoryname}
                 </option>
               ))}
@@ -131,7 +142,7 @@ const AddTransactionForm = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Date
             </label>
             <input
@@ -144,6 +155,12 @@ const AddTransactionForm = ({
             />
           </div>
         </div>
+
+        <p className="text-xs text-stone-300 leading-relaxed">
+          New categories start at $0 balance: record an Income before an Expense. Use
+          &quot;Set budget&quot; on the Categories list so the category appears in Budget
+          buckets.
+        </p>
 
         <div className="flex gap-3 pt-2">
           <button type="submit" className="btn-primary flex-1 py-2.5">

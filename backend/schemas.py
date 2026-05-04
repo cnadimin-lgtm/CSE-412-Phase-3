@@ -10,6 +10,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+# Matches DECIMAL(10,2) in schema.sql — max magnitude before PostgreSQL overflow.
+_MAX_MONEY = 99_999_999.99
+
 
 class LoginRequest(BaseModel):
     username: str
@@ -74,18 +77,18 @@ class BudgetRow(BaseModel):
 class BudgetCreate(BaseModel):
     uid: int
     categoryid: int
-    limitamount: float = Field(ge=0)
+    limitamount: float = Field(ge=0, le=_MAX_MONEY)
 
 
 class BudgetUpdate(BaseModel):
     uid: int
-    limitamount: float = Field(ge=0)
+    limitamount: float = Field(ge=0, le=_MAX_MONEY)
 
 
 class TransactionCreate(BaseModel):
     uid: int
     categoryid: int
-    amount: float = Field(gt=0)
+    amount: float = Field(gt=0, le=_MAX_MONEY)
     date: date
     type: Literal["INCOME", "EXPENSE"]
 
@@ -93,7 +96,7 @@ class TransactionCreate(BaseModel):
 class TransactionUpdate(BaseModel):
     uid: int
     categoryid: int
-    amount: float = Field(gt=0)
+    amount: float = Field(gt=0, le=_MAX_MONEY)
     date: date
     type: Literal["INCOME", "EXPENSE"]
 

@@ -44,7 +44,7 @@ const TransactionTable = ({
     return (
       <div className="card-panel p-6">
         <div className="flex justify-center items-center h-36">
-          <div className="text-stone-400">Loading transactions…</div>
+          <div className="text-stone-300">Loading transactions…</div>
         </div>
       </div>
     )
@@ -56,7 +56,7 @@ const TransactionTable = ({
         <h2 className="text-xl font-bold text-stone-100 mb-3">
           Recent transactions
         </h2>
-        <p className="text-stone-400 text-center py-8">
+        <p className="text-stone-300 text-center py-8">
           No transactions yet. Add one using the button above.
         </p>
       </div>

@@ -48,7 +48,7 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
     return (
       <div className="card-panel p-6">
         <h2 className="text-xl font-bold text-stone-100 mb-2">Budget buckets</h2>
-        <p className="text-stone-400 text-center py-6">
+        <p className="text-stone-300 text-center py-6">
           No budget rows yet. Create a category and add a budget.
         </p>
       </div>
@@ -123,10 +123,11 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
 
               {editingId === row.budgetid ? (
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs text-stone-400">Budget limit ($)</label>
+                  <label className="text-xs text-stone-300">Budget limit ($)</label>
                   <input
                     type="number"
                     min="0"
+                    max="99999999.99"
                     step="0.01"
                     value={draftLimit}
                     onChange={(e) => setDraftLimit(e.target.value)}
@@ -152,8 +153,8 @@ const BudgetStatus = ({ uid, buckets, onRefresh }) => {
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-stone-400">
-                    Limit: <span className="text-stone-200">${limit.toFixed(2)}</span>
+                  <p className="text-xs text-stone-300">
+                    Limit: <span className="text-stone-100">${limit.toFixed(2)}</span>
                   </p>
                   <button
                     type="button"

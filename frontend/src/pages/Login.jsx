@@ -31,7 +31,7 @@ const Login = ({ onLoggedIn }) => {
         <h1 className="text-2xl font-bold text-stone-100 mb-1">
           Student Budgeting
         </h1>
-        <p className="text-stone-400 text-sm mb-6">
+        <p className="text-stone-300 text-sm mb-6">
           Sign in to manage categories, budgets, and transactions.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -41,27 +41,27 @@ const Login = ({ onLoggedIn }) => {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder-stone-500 focus:ring-2 focus:ring-rose-600/60 outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder:text-stone-300 focus:ring-2 focus:ring-rose-600/60 outline-none"
               autoComplete="username"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-300 mb-1">
+            <label className="block text-sm font-medium text-stone-200 mb-1">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder-stone-500 focus:ring-2 focus:ring-rose-600/60 outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-wine-950/40 border border-wine-700/50 text-stone-100 placeholder:text-stone-300 focus:ring-2 focus:ring-rose-600/60 outline-none"
               autoComplete="current-password"
               required
             />
@@ -74,7 +74,7 @@ const Login = ({ onLoggedIn }) => {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        <p className="mt-6 text-xs text-stone-500">
+        <p className="mt-6 text-xs text-stone-300">
           Demo: aryan / pass123 — more seed accounts are listed in README.md.
         </p>
       </div>
