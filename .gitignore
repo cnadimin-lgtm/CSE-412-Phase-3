@@ -1,0 +1,40 @@
+# Environment / secrets (never commit real credentials)
+.env
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local validation script (run manually; not part of published repo)
+backend/validate.py
+
+# Node / frontend (monorepo: one ignore at repo root)
+node_modules/
+dist/
+dist-ssr/
+build/
+
+# Logs / local overrides
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.local
+
+# OS / editors
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
